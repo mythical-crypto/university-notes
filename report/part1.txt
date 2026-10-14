@@ -1,1 +1,0 @@
-The main MobileNetV2 experiment was successful, with 86.30% accuracy on 3000 CIFAR-10 test images.
