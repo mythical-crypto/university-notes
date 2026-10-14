@@ -19,12 +19,20 @@
 - Сведения об источниках: [`results/TEACHABLE_HIGHRES_DATASET.md`](results/TEACHABLE_HIGHRES_DATASET.md), внутри ZIP — `manifest.csv` с источниками.
 - **Не смешивать результаты:** метрики Accuracy 86,30% и F1 86,27% относятся к другой модели, обученной на CIFAR-10. Их нельзя выдавать за результаты Teachable Machine на новом датасете.
 
+## Опубликованная модель Teachable Machine
+
+- **Публичный проект:** https://teachablemachine.withgoogle.com/models/rPbqmrUgK/
+- Подтверждение доступности модели, метаданных и весов: [results/teachable_machine_verification.json](results/teachable_machine_verification.json).
+- Подтверждены метки: bird, cat, dog. Из скриншота обучения пользователя: 25 эпох, batch 16, learning rate 0.001; по 80 фотографий для обучения на класс.
+- Подготовленный высококачественный набор: [results/dataset_100_per_class.zip](results/dataset_100_per_class.zip), 80 изображений для обучения и 20 отложенных тестовых в каждом классе. Источники: [results/TEACHABLE_HIGHRES_DATASET.md](results/TEACHABLE_HIGHRES_DATASET.md).
+- Внимание: **Accuracy 86,30% и F1 86,27%** относятся к **отдельной MobileNetV2, обученной на CIFAR-10**. Не приписывать эти результаты Teachable Machine. Для неё необходим независимый тест на 60 фотографиях.
+
 ## Google Colab
 
 1. Откройте `.ipynb` в Google Colab, выберите «Среда выполнения → Запустить все».
 2. Дождитесь скачивания официального CIFAR-10 и весов ImageNet. При наличии GPU выбирайте T4.
 3. Ноутбук автоматически скачает архив `lab_results.zip` (включая ZIP с 300 изображениями для Teachable Machine, графики, оценки и модели).
-4. В Teachable Machine внешний проект создаётся вручную: `https://teachablemachine.withgoogle.com/train/image`. Загрузить `bird`, `cat`, `dog` из `dataset_100_per_class.zip`, задать `epochs=25`, `batch=16`, `learning_rate=0.001`, экспортировать URL.
+4. Teachable Machine уже обучена и экспортирована: https://teachablemachine.withgoogle.com/models/rPbqmrUgK/ (25 эпох, batch 16, lr 0.001; 80 обучающих фото на класс).
 
 ## Разделение данных
 
