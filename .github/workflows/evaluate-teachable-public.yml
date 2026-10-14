@@ -1,0 +1,45 @@
+name: Evaluate published Teachable Machine model
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/evaluate-teachable-public.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install headless browser and evaluation dependencies
+        run: |
+          python -m pip install --no-cache-dir playwright scikit-learn matplotlib numpy pillow
+          python -m playwright install chromium
+      - name: Evaluate ALL held-out photos against hosted model
+        env:
+          MPLBACKEND: Agg
+          PYTHONUNBUFFERED: '1'
+        run: python -u scripts/evaluate_teachable_public.py
+      - name: Publish verified held-out accuracy and confusion matrix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/teachable_machine_test_metrics.json results/teachable_machine_test_predictions.csv results/teachable_machine_confusion_matrix.png
+          git commit -m 'Publish 60-image public Teachable Machine evaluation' || exit 0
+          git push origin HEAD:main
+      - name: Upload evaluation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: teachable-machine-heldout-evaluation
+          path: |
+            results/teachable_machine_test_metrics.json
+            results/teachable_machine_test_predictions.csv
+            results/teachable_machine_confusion_matrix.png
+          retention-days: 30
