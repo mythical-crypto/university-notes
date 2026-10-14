@@ -1,0 +1,47 @@
+name: Publish final DOCX and PDF lab report
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/publish-lab-report.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install document converters and Cyrillic fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pandoc libreoffice-writer fonts-dejavu-core
+      - name: Render report from evidence-based Markdown
+        run: |
+          cd report
+          pandoc FINAL_REPORT.md -f markdown -s \
+            --resource-path=".:..:../results" \
+            --metadata=lang:ru-RU \
+            -o Transfer_Learning_Final_2026.docx
+          libreoffice -env:UserInstallation=file:///tmp/lo-report-$GITHUB_RUN_ID \
+            --headless --convert-to pdf --outdir . Transfer_Learning_Final_2026.docx
+          test -s Transfer_Learning_Final_2026.docx
+          test -s Transfer_Learning_Final_2026.pdf
+          ls -lh Transfer_Learning_Final_2026.*
+      - name: Publish final files in public GitHub repository
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add report/Transfer_Learning_Final_2026.docx report/Transfer_Learning_Final_2026.pdf
+          git commit -m 'Publish verified DOCX and PDF transfer learning report' || exit 0
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-lab-report-docx-pdf
+          path: |
+            report/Transfer_Learning_Final_2026.docx
+            report/Transfer_Learning_Final_2026.pdf
+          retention-days: 30
