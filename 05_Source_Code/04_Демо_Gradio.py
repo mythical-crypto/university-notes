@@ -6,9 +6,9 @@ import gradio as gr
 import tensorflow as tf
 
 BASE = Path(__file__).resolve().parent
-file = BASE/'artifacts'/'mobilenetv2_cifar3.keras'
+file = BASE.parent/'04_MobileNetV2'/'01_Модель_MobileNetV2_CIFAR10.h5'
 if not file.exists():
-    raise FileNotFoundError('Нет обученной модели: сначала запустите ноутбук и скопируйте .keras в папку artifacts')
+    raise FileNotFoundError('Модель H5 отсутствует в папке 04_MobileNetV2')
 model = tf.keras.models.load_model(str(file), compile=False)
 NAMES=['bird','cat','dog']
 
