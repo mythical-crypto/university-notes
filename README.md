@@ -25,7 +25,7 @@
 - Подтверждение доступности модели, метаданных и весов: [results/teachable_machine_verification.json](results/teachable_machine_verification.json).
 - Подтверждены метки: bird, cat, dog. Из скриншота обучения пользователя: 25 эпох, batch 16, learning rate 0.001; по 80 фотографий для обучения на класс.
 - Подготовленный высококачественный набор: [results/dataset_100_per_class.zip](results/dataset_100_per_class.zip), 80 изображений для обучения и 20 отложенных тестовых в каждом классе. Источники: [results/TEACHABLE_HIGHRES_DATASET.md](results/TEACHABLE_HIGHRES_DATASET.md).
-- Внимание: **Accuracy 86,30% и F1 86,27%** относятся к **отдельной MobileNetV2, обученной на CIFAR-10**. Не приписывать эти результаты Teachable Machine. Для неё необходим независимый тест на 60 фотографиях.
+- Внимание: **Accuracy 86,30% и F1 86,27%** относятся к **отдельной MobileNetV2, обученной на CIFAR-10**. Не приписывать эти результаты Teachable Machine. Тест на 60 отложенных фотографиях завершён: Accuracy 95.00%, macro F1 95.00%; [метрики](results/teachable_machine_test_metrics.json), [матрица ошибок](results/teachable_machine_confusion_matrix.png), [предсказания по всем изображениям](results/teachable_machine_test_predictions.csv).
 
 ## Google Colab
 
