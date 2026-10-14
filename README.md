@@ -27,6 +27,15 @@
 - Подготовленный высококачественный набор: [results/dataset_100_per_class.zip](results/dataset_100_per_class.zip), 80 изображений для обучения и 20 отложенных тестовых в каждом классе. Источники: [results/TEACHABLE_HIGHRES_DATASET.md](results/TEACHABLE_HIGHRES_DATASET.md).
 - Внимание: **Accuracy 86,30% и F1 86,27%** относятся к **отдельной MobileNetV2, обученной на CIFAR-10**. Не приписывать эти результаты Teachable Machine. Тест на 60 отложенных фотографиях завершён: Accuracy 95.00%, macro F1 95.00%; [метрики](results/teachable_machine_test_metrics.json), [матрица ошибок](results/teachable_machine_confusion_matrix.png), [предсказания по всем изображениям](results/teachable_machine_test_predictions.csv).
 
+## Готовые отчёты и сдача
+
+- **[Отчёт PDF](report/Transfer_Learning_Final_2026.pdf)** — опубликован в репозитории.
+- **[Отчёт DOCX](report/Transfer_Learning_Final_2026.docx)** — редактируемая версия.
+- **[Текст отчёта](report/FINAL_REPORT.md)** и [сводка проверок](report/README.md).
+- **[Teachable Machine](https://teachablemachine.withgoogle.com/models/rPbqmrUgK/)** — опубликованная веб-модель. Фактическая точность на 60 отложенных изображениях: **95.00%**. [Полные метрики](results/teachable_machine_test_metrics.json).
+
+Примечание: публикации в Yandex Datasphere, Yandex Disk и Google Drive отдельно не подтверждены; GitHub Actions не подменяет эти сервисы.
+
 ## Google Colab
 
 1. Откройте `.ipynb` в Google Colab, выберите «Среда выполнения → Запустить все».
