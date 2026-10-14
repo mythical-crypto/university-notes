@@ -1,9 +1,6 @@
 name: Build higher-quality Teachable Machine dataset
 
 on:
-  push:
-    paths:
-      - '.github/workflows/build-highres-teachable.yml'
   workflow_dispatch:
 
 permissions:
@@ -137,11 +134,11 @@ jobs:
               print('CUB bird offset',b_offset,'collected',len(found['bird']),flush=True)
           if any(len(found[c])<N for c in C):
               raise RuntimeError('Insufficient photos '+str({c:len(found[c]) for c in C}))
-          Path('results').mkdir(exist_ok=True)
+          Path('02_Dataset').mkdir(exist_ok=True)
           manifest=[]
           preview=Image.new('RGB',(720,690),'#f3f3f3')
           draw=ImageDraw.Draw(preview)
-          with zipfile.ZipFile('results/dataset_100_per_class.zip','w',zipfile.ZIP_DEFLATED,compresslevel=7) as z:
+          with zipfile.ZipFile('02_Dataset/Датасет_Птицы_Кошки_Собаки_80-20.zip','w',zipfile.ZIP_DEFLATED,compresslevel=7) as z:
               for col,c in enumerate(C):
                   records=sorted(found[c],key=lambda it:it[0]);RAND.shuffle(records)
                   for n,(idx,raw,dims,sha,src) in enumerate(records):
@@ -166,8 +163,8 @@ jobs:
                   'Evaluate only after training with dataset_highres/test/* (60 unseen photos).\n'
                   'Original repository MobileNetV2 CIFAR-10 metrics do NOT apply to this archive.\n'
                   'Dataset card states MIT; underlying image licenses may differ.\n')
-          preview.save('results/highres_dataset_preview.jpg',quality=91)
-          with zipfile.ZipFile('results/dataset_100_per_class.zip') as z:
+          preview.save('02_Dataset/Примеры_изображений.jpg',quality=91)
+          with zipfile.ZipFile('02_Dataset/Датасет_Птицы_Кошки_Собаки_80-20.zip') as z:
               imgs=[p for p in z.namelist() if p.endswith('.jpg')]
               assert len(imgs)==300 and z.testzip() is None
               for c in C:
@@ -175,7 +172,7 @@ jobs:
                   assert sum('/test/'+c+'/' in x for x in imgs)==20
           minshort=min(min(map(int,x[4].split('x'))) for x in manifest)
           assert minshort>=170
-          Path('results/TEACHABLE_HIGHRES_DATASET.md').write_text(
+          Path('02_Dataset/Источники_и_разделение.md').write_text(
               '# Higher-quality images for Google Teachable Machine\n\n'
               'Cat/dog source: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds (dataset card: MIT).\n'
               'Bird source: https://huggingface.co/datasets/cassiekang/cub200_dataset (Caltech-UCSD Birds-200-2011).\n\n'
@@ -194,12 +191,12 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add results/dataset_100_per_class.zip results/highres_dataset_preview.jpg results/TEACHABLE_HIGHRES_DATASET.md
+          git add 02_Dataset
           git commit -m 'Replace Teachable Machine sample images with higher-quality photos'
           git push origin HEAD:main
       - name: Upload dataset for convenient download
         uses: actions/upload-artifact@v4
         with:
           name: teachable-machine-highres
-          path: results/dataset_100_per_class.zip
+          path: 02_Dataset/Датасет_Птицы_Кошки_Собаки_80-20.zip
           retention-days: 30

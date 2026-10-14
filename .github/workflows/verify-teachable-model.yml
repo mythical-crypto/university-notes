@@ -2,9 +2,6 @@ name: Verify published Teachable Machine model
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/verify-teachable-model.yml'
 
 permissions:
   contents: write
@@ -68,8 +65,8 @@ jobs:
               'test_metrics':'NOT MEASURED: 60 holdout images have not been evaluated using this public model',
               'note':'CIFAR-10 MobileNetV2 accuracy 86.30% belongs to the separate GitHub model, not to this Teachable Machine model.'
           }
-          Path('results').mkdir(exist_ok=True)
-          Path('results/teachable_machine_verification.json').write_text(
+          Path('03_Teachable_Machine').mkdir(exist_ok=True)
+          Path('03_Teachable_Machine/01_Проверка_публикации.json').write_text(
               json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
           print('VERIFIED PUBLIC MODEL',base,'labels',names,'weight files',len(checks),flush=True)
           PY
@@ -77,6 +74,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results/teachable_machine_verification.json
+          git add 03_Teachable_Machine/01_Проверка_публикации.json
           git commit -m "Verify published Teachable Machine bird-cat-dog model" || exit 0
           git push origin HEAD:main

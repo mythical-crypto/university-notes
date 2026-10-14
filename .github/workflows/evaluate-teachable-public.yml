@@ -2,9 +2,6 @@ name: Evaluate published Teachable Machine model
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/evaluate-teachable-public.yml'
 
 permissions:
   contents: write
@@ -26,12 +23,12 @@ jobs:
         env:
           MPLBACKEND: Agg
           PYTHONUNBUFFERED: '1'
-        run: python -u scripts/evaluate_teachable_public.py
+        run: python -u 05_Source_Code/03_Проверка_Teachable_Machine.py
       - name: Publish verified held-out accuracy and confusion matrix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add results/teachable_machine_test_metrics.json results/teachable_machine_test_predictions.csv results/teachable_machine_confusion_matrix.png
+          git add 03_Teachable_Machine/02_Метрики_60_фото.json 03_Teachable_Machine/03_Предсказания_60_фото.csv 03_Teachable_Machine/04_Матрица_ошибок.png
           git commit -m 'Publish 60-image public Teachable Machine evaluation' || exit 0
           git push origin HEAD:main
       - name: Upload evaluation artifacts
@@ -39,7 +36,7 @@ jobs:
         with:
           name: teachable-machine-heldout-evaluation
           path: |
-            results/teachable_machine_test_metrics.json
-            results/teachable_machine_test_predictions.csv
-            results/teachable_machine_confusion_matrix.png
+            03_Teachable_Machine/02_Метрики_60_фото.json
+            03_Teachable_Machine/03_Предсказания_60_фото.csv
+            03_Teachable_Machine/04_Матрица_ошибок.png
           retention-days: 30

@@ -1,9 +1,7 @@
 name: Train CIFAR-10 transfer learning model
 on:
-  push:
-    paths:
-      - '.github/workflows/train-cifar10.yml'
   workflow_dispatch:
+
 permissions:
   contents: write
 jobs:
@@ -28,19 +26,21 @@ jobs:
           MPLBACKEND: Agg
           OMP_NUM_THREADS: "4"
         run: |
-          python -u train_transfer_learning.py 2>&1 | tee train.log
+          python -u 05_Source_Code/02_Обучение_CIFAR10.py 2>&1 | tee train.log
       - name: Publish trained model, figures and metrics
         if: success()
         run: |
-          mkdir -p results
-          cp transfer_learning_lab/artifacts/metrics.json results/
-          cp transfer_learning_lab/artifacts/classification_report.txt results/
-          cp transfer_learning_lab/artifacts/SUMMARY.md results/
-          cp transfer_learning_lab/artifacts/*.png results/
-          cp transfer_learning_lab/artifacts/mobilenetv2_cifar3.h5 results/
-          cp transfer_learning_lab/artifacts/dataset_100_per_class.zip results/
+          mkdir -p 04_MobileNetV2
+          cp transfer_learning_lab/artifacts/metrics.json 04_MobileNetV2/02_Метрики_CIFAR10.json
+          cp transfer_learning_lab/artifacts/classification_report.txt 04_MobileNetV2/05_Отчет_по_классам.txt
+          cp transfer_learning_lab/artifacts/SUMMARY.md 04_MobileNetV2/08_Краткая_сводка.md
+          cp transfer_learning_lab/artifacts/confusion_matrix.png 04_MobileNetV2/03_Матрица_ошибок.png
+          cp transfer_learning_lab/artifacts/main_learning.png 04_MobileNetV2/04_Графики_обучения.png
+          cp transfer_learning_lab/artifacts/dataset_samples.png 04_MobileNetV2/07_Примеры_CIFAR10.png
+          cp transfer_learning_lab/artifacts/misclassifications.png 04_MobileNetV2/06_Примеры_ошибок.png
+          cp transfer_learning_lab/artifacts/mobilenetv2_cifar3.h5 04_MobileNetV2/01_Модель_MobileNetV2_CIFAR10.h5
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add results
+          git add 04_MobileNetV2
           git commit -m "Add verified training metrics and trained model" || exit 0
           git push origin HEAD:main
