@@ -77,13 +77,13 @@ jobs:
           offsets += [RAND.randrange(max(1,total-100)) for _ in range(150)]
           label_map=None
           for offset in offsets:
-              if all(len(found[c])>=N for c in C):break
+              if all(len(found[c])>=N for c in ('cat','dog')):break
               data=api('/rows',{'dataset':D,'config':config,'split':'train','offset':offset,'length':100})
               if label_map is None:label_map=mapping(data['features'])
               candidates=[]
               for obj in data['rows']:
                   row=obj['row'];idx=obj['row_idx'];label=label_map.get(row['label'])
-                  if label not in C or len(found[label])>=N or idx in seen:continue
+                  if label not in ('cat','dog') or len(found[label])>=N or idx in seen:continue
                   src=(row.get('image') or {}).get('src')
                   if src:seen.add(idx);candidates.append((idx,label,src))
               RAND.shuffle(candidates)
@@ -102,6 +102,39 @@ jobs:
                           found[label].append((idx,raw,dims,sha,src))
                       except Exception as ex:print('Skip',idx,label,type(ex).__name__,str(ex)[:120])
               print('Offset',offset, {c:len(found[c]) for c in C},flush=True)
+          # Bird photos from a dedicated, professionally annotated bird dataset.
+          BIRD_SOURCE='cassiekang/cub200_dataset'
+          b_entries=api('/splits',{'dataset':BIRD_SOURCE})['splits']
+          b_entry=next(x for x in b_entries if x['split']=='train')
+          b_config=b_entry['config']
+          b_first=api('/rows',{'dataset':BIRD_SOURCE,'config':b_config,'split':'train','offset':0,'length':1})
+          b_total=int(b_first['num_rows_total'])
+          print('Verified bird-only academic dataset',BIRD_SOURCE,'rows',b_total,flush=True)
+          b_offsets=list(dict.fromkeys([0]+[int((b_total-100)*q/15) for q in range(16)]))
+          b_offsets += [RAND.randrange(max(1,b_total-100)) for _ in range(150)]
+          b_seen=set()
+          for b_offset in b_offsets:
+              if len(found['bird'])>=N:break
+              b_rows=api('/rows',{'dataset':BIRD_SOURCE,'config':b_config,'split':'train','offset':b_offset,'length':100})
+              available=[]
+              for b_obj in b_rows['rows']:
+                  b_idx=b_obj['row_idx']
+                  b_src=(b_obj['row'].get('image') or {}).get('src')
+                  # The CUB-200-2011 dataset contains only photographed bird species.
+                  if b_idx not in b_seen and b_src:
+                      b_seen.add(b_idx);available.append((b_idx,b_src))
+              RAND.shuffle(available)
+              available=available[:max(0,N-len(found['bird']))]
+              with ThreadPoolExecutor(max_workers=10) as pool:
+                  bird_futures={pool.submit(get_image,src):(idx,src) for idx,src in available}
+                  for fut in as_completed(bird_futures):
+                      idx,src=bird_futures[fut]
+                      try:
+                          raw,dims=fut.result();sha=hashlib.sha256(raw).hexdigest()
+                          if sha in digests or len(found['bird'])>=N:continue
+                          digests.add(sha);found['bird'].append((idx,raw,dims,sha,src))
+                      except Exception as ex:print('Skip bird',idx,type(ex).__name__,str(ex)[:120])
+              print('CUB bird offset',b_offset,'collected',len(found['bird']),flush=True)
           if any(len(found[c])<N for c in C):
               raise RuntimeError('Insufficient photos '+str({c:len(found[c]) for c in C}))
           Path('results').mkdir(exist_ok=True)
@@ -115,17 +148,17 @@ jobs:
                       split='train' if n<80 else 'test'
                       path=f'dataset_highres/{split}/{c}/{c}_{n:03d}.jpg'
                       z.writestr(path,raw)
-                      manifest.append([path,split,c,idx,str(dims[0])+'x'+str(dims[1]),sha,src])
+                      manifest.append([path,split,c,idx,str(dims[0])+'x'+str(dims[1]),sha,src,(BIRD_SOURCE if c=='bird' else D)])
                   for i in range(3):
                       im=Image.open(io.BytesIO(records[i][1]));im.thumbnail((218,187))
                       xx=col*240+(240-im.width)//2;yy=i*230+30
                       preview.paste(im,(xx,yy));draw.text((col*240+18,i*230+8),c,fill='#111111')
               output=io.StringIO();writer=csv.writer(output)
-              writer.writerow(['file','split','class','source_row','source_dimensions','sha256','source_url'])
+              writer.writerow(['file','split','class','source_row','source_dimensions','sha256','source_url','source_dataset'])
               writer.writerows(manifest)
               z.writestr('dataset_highres/manifest.csv',output.getvalue())
               z.writestr('dataset_highres/README.txt',
-                  'PHOTO SOURCE: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds\n'
+                  'CATS AND DOGS SOURCE: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds\n'\n                  'BIRD SOURCE: https://huggingface.co/datasets/cassiekang/cub200_dataset (CUB-200-2011)\n'
                   'These source photos are separate from CIFAR-10. No synthetic enlargement.\n'
                   'Dataset: 3 classes bird cat dog, 80 train + 20 test for EACH class.\n'
                   'Train Teachable Machine from dataset_highres/train/* (240 photos).\n'
@@ -143,7 +176,7 @@ jobs:
           assert minshort>=170
           Path('results/TEACHABLE_HIGHRES_DATASET.md').write_text(
               '# Higher-quality images for Google Teachable Machine\n\n'
-              'Source: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds (dataset card: MIT).\n\n'
+              'Cat/dog source: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds (dataset card: MIT).\n'\n              'Bird source: https://huggingface.co/datasets/cassiekang/cub200_dataset (Caltech-UCSD Birds-200-2011).\n\n'
               '**Separate from CIFAR-10:** This 300-photo image collection is for the Google Teachable Machine step only.\n'
               '**Original CIFAR-10 MobileNetV2 results and metrics remain unchanged and refer ONLY to CIFAR-10.**\n\n'
               '- 3 classes: bird, cat, dog\n- 100 photos each, 80 train and 20 test each\n'
