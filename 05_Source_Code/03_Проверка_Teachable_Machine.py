@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from playwright.sync_api import sync_playwright
 
 MODEL_URL = "https://teachablemachine.withgoogle.com/models/rPbqmrUgK/"
-DATASET = Path("results/dataset_100_per_class.zip")
+DATASET = Path("02_Dataset/Датасет_Птицы_Кошки_Собаки_80-20.zip")
 LABELS = ["bird", "cat", "dog"]
 
 with zipfile.ZipFile(DATASET) as z:
@@ -84,7 +84,7 @@ cm=confusion_matrix(true,pred,labels=LABELS)
 out={
   "model_url":MODEL_URL,
   "evaluation_date_utc":datetime.now(timezone.utc).isoformat(),
-  "source":"60 unseen high-quality holdout photos, 20 per class, from results/dataset_100_per_class.zip",
+  "source":"60 unseen high-quality holdout photos, 20 per class, from 02_Dataset/Датасет_Птицы_Кошки_Собаки_80-20.zip",
   "test_images":len(results),"classes":LABELS,"training_per_class":80,"test_per_class":20,
   "test_accuracy":float(accuracy_score(true,pred)),
   "test_precision_macro":float(macro[0]),
@@ -97,14 +97,14 @@ out={
   "classification_report":classification_report(true,pred,labels=LABELS,zero_division=0),
   "important":"Metrics belong to the published Google Teachable Machine model, NOT CIFAR-10 MobileNetV2."
 }
-dest=Path("results")
-(dest/"teachable_machine_test_metrics.json").write_text(
+dest=Path("03_Teachable_Machine")
+(dest/"02_Метрики_60_фото.json").write_text(
   json.dumps(out,ensure_ascii=False,indent=2),encoding="utf-8")
-with open(dest/"teachable_machine_test_predictions.csv","w",encoding="utf-8",newline="") as f:
+with open(dest/"03_Предсказания_60_фото.csv","w",encoding="utf-8",newline="") as f:
     w=csv.DictWriter(f,fieldnames=["file","true","predicted","p_bird","p_cat","p_dog"])
     w.writeheader();w.writerows(results)
 fig,ax=plt.subplots(figsize=(7,6))
 ConfusionMatrixDisplay(cm,display_labels=LABELS).plot(ax=ax,cmap="Blues",values_format="d",colorbar=False)
 ax.set_title("Teachable Machine — 60 unseen high-quality test photos")
-fig.tight_layout();fig.savefig(dest/"teachable_machine_confusion_matrix.png",dpi=170);plt.close(fig)
+fig.tight_layout();fig.savefig(dest/"04_Матрица_ошибок.png",dpi=170);plt.close(fig)
 print(json.dumps({k:v for k,v in out.items() if k.startswith("test_") or k=="confusion_matrix"},indent=2),flush=True)
