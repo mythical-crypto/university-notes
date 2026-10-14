@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-14",
+  "source": "CIFAR-10 / official train and test",
+  "architecture": "MobileNetV2 ImageNet frozen + GAP + Dense(128) + Dropout(0.3) + softmax(3)",
+  "labels": [
+    "bird",
+    "cat",
+    "dog"
+  ],
+  "split": {
+    "training": 3600,
+    "validation": 900,
+    "test": 3000,
+    "small_dataset_train": 240,
+    "small_dataset_test": 60
+  },
+  "parameters": {
+    "epochs_max": 8,
+    "epochs_executed": 8,
+    "batch_size": 32,
+    "initial_learning_rate": 0.001,
+    "validation_split": 0.2,
+    "optimizer": "Adam",
+    "dropout": 0.3
+  },
+  "training_time_seconds": 69.44,
+  "train_accuracy": 0.9205555319786072,
+  "validation_accuracy": 0.8533333539962769,
+  "train_loss": 0.2004466950893402,
+  "validation_loss": 0.3254251182079315,
+  "test_accuracy": 0.863,
+  "test_precision_macro": 0.8626431083536691,
+  "test_recall_macro": 0.863,
+  "test_f1_macro": 0.8626987706713036,
+  "confusion_matrix": [
+    [
+      922,
+      52,
+      26
+    ],
+    [
+      63,
+      803,
+      134
+    ],
+    [
+      24,
+      112,
+      864
+    ]
+  ],
+  "best_class": {
+    "label": "bird",
+    "recall": 0.922
+  },
+  "worst_class": {
+    "label": "cat",
+    "recall": 0.803
+  },
+  "mistakes": [
+    {
+      "true": "bird",
+      "predicted": "cat"
+    },
+    {
+      "true": "cat",
+      "predicted": "bird"
+    },
+    {
+      "true": "cat",
+      "predicted": "dog"
+    },
+    {
+      "true": "bird",
+      "predicted": "dog"
+    },
+    {
+      "true": "bird",
+      "predicted": "cat"
+    },
+    {
+      "true": "cat",
+      "predicted": "dog"
+    },
+    {
+      "true": "bird",
+      "predicted": "dog"
+    },
+    {
+      "true": "cat",
+      "predicted": "dog"
+    },
+    {
+      "true": "cat",
+      "predicted": "dog"
+    },
+    {
+      "true": "dog",
+      "predicted": "bird"
+    }
+  ],
+  "small_model": {
+    "epochs_max": 25,
+    "epochs_executed": 7,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "training_time_seconds": 7.52,
+    "external_test_accuracy": 0.800000011920929,
+    "external_test_loss": 0.5682274103164673
+  }
+}
