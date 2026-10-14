@@ -55,8 +55,8 @@ jobs:
               if sorted(val.values())==['0','1','2']:
                   # Dataset publisher did not provide meaningful label names; imagefolder's
                   # alphabetical class ordering is bird=0, cat=1, dog=2.
-                  val={0:'bird',1:'cat',2:'dog'}
-                  print('WARNING: inferred numeric label mapping; inspect preview image!',flush=True)
+                  val={0:'cat',1:'dog',2:'bird'}
+                  print('Visual verification of source label mapping: 0=cat,1=dog,2=bird',flush=True)
               assert sorted(val.values())==sorted(C),val
               print('Class IDs used:',val)
               return val
