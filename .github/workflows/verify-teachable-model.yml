@@ -1,0 +1,80 @@
+name: Verify published Teachable Machine model
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/verify-teachable-model.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check public model and metadata
+        run: |
+          python - <<'PY'
+          import requests, json, hashlib, datetime
+          from pathlib import Path
+          base='https://teachablemachine.withgoogle.com/models/rPbqmrUgK/'
+          sess=requests.Session()
+          sess.headers['User-Agent']='Mozilla/5.0 (compatible; EducationalModelVerifier/1.0)'
+          paths=['metadata.json','model.json']
+          data={}
+          for p in paths:
+              response=sess.get(base+p,timeout=40)
+              print(p,'HTTP',response.status_code,'bytes',len(response.content),flush=True)
+              response.raise_for_status()
+              data[p]=response.json()
+          metadata=data['metadata.json']
+          model=data['model.json']
+          names=metadata.get('labels',[])
+          assert names==['bird','cat','dog'],('Unexpected labels/order',names)
+          assert model.get('weightsManifest'), 'Missing weights manifest'
+          groups=model['weightsManifest']
+          shards=[path for group in groups for path in group.get('paths',[])]
+          assert shards, 'No weights shards'
+          checks=[]
+          for path in shards:
+              url=base+path
+              # Actual GET rather than HEAD; verify weight files are available.
+              r=sess.get(url,timeout=90)
+              r.raise_for_status()
+              checks.append({'file':path,'bytes':len(r.content),'sha256':hashlib.sha256(r.content).hexdigest()})
+              assert len(r.content)>0
+          out={
+              'date_verified_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'model_url':base,
+              'metadata_url':base+'metadata.json',
+              'model_json_url':base+'model.json',
+              'classes':names,
+              'metadata':metadata,
+              'format':model.get('format'),
+              'model_json_sha256':hashlib.sha256(json.dumps(model,sort_keys=True).encode()).hexdigest(),
+              'weights':checks,
+              'public_resource_status':'verified',
+              'manual_training_parameters_from_user_screenshot':{
+                  'epochs':25,'batch_size':16,'learning_rate':0.001,'train_per_class':80
+              },
+              'test_metrics':'NOT MEASURED: 60 holdout images have not been evaluated using this public model',
+              'note':'CIFAR-10 MobileNetV2 accuracy 86.30% belongs to the separate GitHub model, not to this Teachable Machine model.'
+          }
+          Path('results').mkdir(exist_ok=True)
+          Path('results/teachable_machine_verification.json').write_text(
+              json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('VERIFIED PUBLIC MODEL',base,'labels',names,'weight files',len(checks),flush=True)
+          PY
+      - name: Publish verification record
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/teachable_machine_verification.json
+          git commit -m "Verify published Teachable Machine bird-cat-dog model" || exit 0
+          git push origin HEAD:main
