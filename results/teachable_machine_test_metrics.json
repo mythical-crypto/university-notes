@@ -1,0 +1,57 @@
+{
+  "model_url": "https://teachablemachine.withgoogle.com/models/rPbqmrUgK/",
+  "evaluation_date_utc": "2026-10-14T13:55:12.455619+00:00",
+  "source": "60 unseen high-quality holdout photos, 20 per class, from results/dataset_100_per_class.zip",
+  "test_images": 60,
+  "classes": [
+    "bird",
+    "cat",
+    "dog"
+  ],
+  "training_per_class": 80,
+  "test_per_class": 20,
+  "test_accuracy": 0.95,
+  "test_precision_macro": 0.9507101086048454,
+  "test_recall_macro": 0.9499999999999998,
+  "test_f1_macro": 0.9499687304565354,
+  "test_log_loss": 0.09558170257128686,
+  "confusion_matrix": [
+    [
+      20,
+      0,
+      0
+    ],
+    [
+      0,
+      18,
+      2
+    ],
+    [
+      0,
+      1,
+      19
+    ]
+  ],
+  "per_class": {
+    "bird": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 20
+    },
+    "cat": {
+      "precision": 0.9473684210526315,
+      "recall": 0.9,
+      "f1_score": 0.9230769230769231,
+      "support": 20
+    },
+    "dog": {
+      "precision": 0.9047619047619048,
+      "recall": 0.95,
+      "f1_score": 0.926829268292683,
+      "support": 20
+    }
+  },
+  "classification_report": "              precision    recall  f1-score   support\n\n        bird       1.00      1.00      1.00        20\n         cat       0.95      0.90      0.92        20\n         dog       0.90      0.95      0.93        20\n\n    accuracy                           0.95        60\n   macro avg       0.95      0.95      0.95        60\nweighted avg       0.95      0.95      0.95        60\n",
+  "important": "Metrics belong to the published Google Teachable Machine model, NOT CIFAR-10 MobileNetV2."
+}
