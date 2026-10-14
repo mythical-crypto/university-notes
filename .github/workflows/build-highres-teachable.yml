@@ -1,0 +1,162 @@
+name: Build higher-quality Teachable Machine dataset
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-highres-teachable.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-dataset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install --no-cache-dir requests pillow
+      - name: Download source photos, verify 80/20 split, build zip
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          python - <<'PY'
+          import io, csv, json, zipfile, random, hashlib, time
+          from pathlib import Path
+          from collections import Counter
+          from concurrent.futures import ThreadPoolExecutor,as_completed
+          from urllib.parse import urlparse
+          import requests
+          from PIL import Image,ImageOps,ImageDraw
+          from requests.adapters import HTTPAdapter
+          from urllib3.util.retry import Retry
+          D='Sijuade/Cats-Dogs-Birds'
+          API='https://datasets-server.huggingface.co'
+          C=('bird','cat','dog');N=100;RAND=random.Random(20261014)
+          S=requests.Session()
+          S.mount('https://',HTTPAdapter(max_retries=Retry(total=7,backoff_factor=1.5,status_forcelist=[429,500,502,503,504]),pool_connections=16,pool_maxsize=16))
+          S.headers.update({'User-Agent':'educational-transfer-learning-dataset-builder/1.0'})
+          def api(path,params):
+              r=S.get(API+path,params=params,timeout=(20,90));r.raise_for_status();return r.json()
+          splits=api('/splits',{'dataset':D})['splits']
+          ent=next(x for x in splits if x['split']=='train' and x.get('config')=='default')
+          config,total=ent['config'],int(ent['num_examples'])
+          print('Source',D,'rows',total)
+          def mapping(features):
+              f=next(x for x in features if x['name']=='label')['type']['names']
+              val={int(k):v.lower().strip() for k,v in (f.items() if isinstance(f,dict) else enumerate(f))}
+              assert sorted(val.values())==sorted(C),val
+              print('Verified class IDs:',val)
+              return val
+          def get_image(src):
+              assert src.startswith('https://')
+              assert urlparse(src).hostname in ('datasets-server.huggingface.co','huggingface.co')
+              r=S.get(src,timeout=(20,75));r.raise_for_status()
+              assert len(r.content)<6000000
+              img=Image.open(io.BytesIO(r.content))
+              img=ImageOps.exif_transpose(img).convert('RGB')
+              w,h=img.size
+              if w<224 or h<170:raise ValueError('Low native resolution: '+str(img.size))
+              img.thumbnail((640,640),Image.Resampling.LANCZOS) # NO UPSCALING
+              b=io.BytesIO();img.save(b,'JPEG',quality=91,subsampling=0,optimize=True)
+              return b.getvalue(),(w,h)
+          found={c:[] for c in C};seen=set();digests=set()
+          offsets=list(dict.fromkeys([0]+[int((total-100)*p/19) for p in range(20)]))
+          offsets += [RAND.randrange(max(1,total-100)) for _ in range(150)]
+          label_map=None
+          for offset in offsets:
+              if all(len(found[c])>=N for c in C):break
+              data=api('/rows',{'dataset':D,'config':config,'split':'train','offset':offset,'length':100})
+              if label_map is None:label_map=mapping(data['features'])
+              candidates=[]
+              for obj in data['rows']:
+                  row=obj['row'];idx=obj['row_idx'];label=label_map.get(row['label'])
+                  if label not in C or len(found[label])>=N or idx in seen:continue
+                  src=(row.get('image') or {}).get('src')
+                  if src:seen.add(idx);candidates.append((idx,label,src))
+              RAND.shuffle(candidates)
+              slots={c:N-len(found[c]) for c in C}
+              pending=[]
+              for it in candidates:
+                  if slots[it[1]]>0:slots[it[1]]-=1;pending.append(it)
+              with ThreadPoolExecutor(max_workers=10) as pool:
+                  futures={pool.submit(get_image,it[2]):it for it in pending}
+                  for f in as_completed(futures):
+                      idx,label,src=futures[f]
+                      try:
+                          raw,dims=f.result();sha=hashlib.sha256(raw).hexdigest()
+                          if sha in digests or len(found[label])>=N:continue
+                          digests.add(sha)
+                          found[label].append((idx,raw,dims,sha,src))
+                      except Exception as ex:print('Skip',idx,label,type(ex).__name__,str(ex)[:120])
+              print('Offset',offset, {c:len(found[c]) for c in C},flush=True)
+          if any(len(found[c])<N for c in C):
+              raise RuntimeError('Insufficient photos '+str({c:len(found[c]) for c in C}))
+          Path('results').mkdir(exist_ok=True)
+          manifest=[]
+          preview=Image.new('RGB',(720,690),'#f3f3f3')
+          draw=ImageDraw.Draw(preview)
+          with zipfile.ZipFile('results/dataset_100_per_class.zip','w',zipfile.ZIP_DEFLATED,compresslevel=7) as z:
+              for col,c in enumerate(C):
+                  records=sorted(found[c],key=lambda it:it[0]);RAND.shuffle(records)
+                  for n,(idx,raw,dims,sha,src) in enumerate(records):
+                      split='train' if n<80 else 'test'
+                      path=f'dataset_highres/{split}/{c}/{c}_{n:03d}.jpg'
+                      z.writestr(path,raw)
+                      manifest.append([path,split,c,idx,str(dims[0])+'x'+str(dims[1]),sha,src])
+                  for i in range(3):
+                      im=Image.open(io.BytesIO(records[i][1]));im.thumbnail((218,187))
+                      xx=col*240+(240-im.width)//2;yy=i*230+30
+                      preview.paste(im,(xx,yy));draw.text((col*240+18,i*230+8),c,fill='#111111')
+              output=io.StringIO();writer=csv.writer(output)
+              writer.writerow(['file','split','class','source_row','source_dimensions','sha256','source_url'])
+              writer.writerows(manifest)
+              z.writestr('dataset_highres/manifest.csv',output.getvalue())
+              z.writestr('dataset_highres/README.txt',
+                  'PHOTO SOURCE: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds\n'
+                  'These source photos are separate from CIFAR-10. No synthetic enlargement.\n'
+                  'Dataset: 3 classes bird cat dog, 80 train + 20 test for EACH class.\n'
+                  'Train Teachable Machine from dataset_highres/train/* (240 photos).\n'
+                  'Evaluate only after training with dataset_highres/test/* (60 unseen photos).\n'
+                  'Original repository MobileNetV2 CIFAR-10 metrics do NOT apply to this archive.\n'
+                  'Dataset card states MIT; underlying image licenses may differ.\n')
+          preview.save('results/highres_dataset_preview.jpg',quality=91)
+          with zipfile.ZipFile('results/dataset_100_per_class.zip') as z:
+              imgs=[p for p in z.namelist() if p.endswith('.jpg')]
+              assert len(imgs)==300 and z.testzip() is None
+              for c in C:
+                  assert sum('/train/'+c+'/' in x for x in imgs)==80
+                  assert sum('/test/'+c+'/' in x for x in imgs)==20
+          minshort=min(min(map(int,x[4].split('x'))) for x in manifest)
+          assert minshort>=170
+          Path('results/TEACHABLE_HIGHRES_DATASET.md').write_text(
+              '# Higher-quality images for Google Teachable Machine\n\n'
+              'Source: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds (dataset card: MIT).\n\n'
+              '**Separate from CIFAR-10:** This 300-photo image collection is for the Google Teachable Machine step only.\n'
+              '**Original CIFAR-10 MobileNetV2 results and metrics remain unchanged and refer ONLY to CIFAR-10.**\n\n'
+              '- 3 classes: bird, cat, dog\n- 100 photos each, 80 train and 20 test each\n'
+              f'- Smallest original shorter edge: {minshort}px (not upscaled)\n'
+              '- Train images: dataset_highres/train/bird, cat, dog\n'
+              '- Independent test images: dataset_highres/test/bird, cat, dog\n'
+              '- Original image row IDs and hashes recorded in dataset_highres/manifest.csv within the ZIP\n'
+              '- Rights: research/teaching; check underlying image licensing before other redistribution\n',
+              encoding='utf8')
+          print('BUILT high-resolution archive:',len(imgs),'photos; shortest original edge min:',minshort,flush=True)
+          PY
+      - name: Publish replacement ZIP and source documentation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/dataset_100_per_class.zip results/highres_dataset_preview.jpg results/TEACHABLE_HIGHRES_DATASET.md
+          git commit -m 'Replace Teachable Machine sample images with higher-quality photos'
+          git push origin HEAD:main
+      - name: Upload dataset for convenient download
+        uses: actions/upload-artifact@v4
+        with:
+          name: teachable-machine-highres
+          path: results/dataset_100_per_class.zip
+          retention-days: 30
