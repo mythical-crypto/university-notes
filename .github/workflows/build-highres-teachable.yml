@@ -158,7 +158,8 @@ jobs:
               writer.writerows(manifest)
               z.writestr('dataset_highres/manifest.csv',output.getvalue())
               z.writestr('dataset_highres/README.txt',
-                  'CATS AND DOGS SOURCE: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds\n'\n                  'BIRD SOURCE: https://huggingface.co/datasets/cassiekang/cub200_dataset (CUB-200-2011)\n'
+                  'CATS AND DOGS SOURCE: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds\n'
+                  'BIRD SOURCE: https://huggingface.co/datasets/cassiekang/cub200_dataset (CUB-200-2011)\n'
                   'These source photos are separate from CIFAR-10. No synthetic enlargement.\n'
                   'Dataset: 3 classes bird cat dog, 80 train + 20 test for EACH class.\n'
                   'Train Teachable Machine from dataset_highres/train/* (240 photos).\n'
@@ -176,7 +177,8 @@ jobs:
           assert minshort>=170
           Path('results/TEACHABLE_HIGHRES_DATASET.md').write_text(
               '# Higher-quality images for Google Teachable Machine\n\n'
-              'Cat/dog source: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds (dataset card: MIT).\n'\n              'Bird source: https://huggingface.co/datasets/cassiekang/cub200_dataset (Caltech-UCSD Birds-200-2011).\n\n'
+              'Cat/dog source: https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds (dataset card: MIT).\n'
+              'Bird source: https://huggingface.co/datasets/cassiekang/cub200_dataset (Caltech-UCSD Birds-200-2011).\n\n'
               '**Separate from CIFAR-10:** This 300-photo image collection is for the Google Teachable Machine step only.\n'
               '**Original CIFAR-10 MobileNetV2 results and metrics remain unchanged and refer ONLY to CIFAR-10.**\n\n'
               '- 3 classes: bird, cat, dog\n- 100 photos each, 80 train and 20 test each\n'
