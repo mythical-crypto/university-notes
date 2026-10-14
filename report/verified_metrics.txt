@@ -1,0 +1,1 @@
+CIFAR-10 three-class MobileNetV2. Test accuracy: 86.30%. Macro F1: 86.27%. Training run: 38549153693. Teachable Machine project: not created.
