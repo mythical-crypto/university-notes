@@ -1,0 +1,51 @@
+name: Build clean group 141 submission package
+on:
+  push:
+    paths:
+      - '.github/workflows/package-submission-141.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check essential submission files and metrics
+        run: |
+          python - <<'PY'
+          import json,zipfile
+          from pathlib import Path
+          must=[
+            'README.md',
+            '01_Report/Отчет_Тимофеев_РС_141.docx',
+            '01_Report/Отчет_Тимофеев_РС_141.pdf',
+            '02_Dataset/Датасет_Птицы_Кошки_Собаки_80-20.zip',
+            '03_Teachable_Machine/02_Метрики_60_фото.json',
+            '03_Teachable_Machine/04_Матрица_ошибок.png',
+            '04_MobileNetV2/01_Модель_MobileNetV2_CIFAR10.h5',
+            '04_MobileNetV2/02_Метрики_CIFAR10.json',
+            '05_Source_Code/01_Ноутбук_CIFAR10.ipynb'
+          ]
+          for p in must:
+            path=Path(p);assert path.is_file() and path.stat().st_size>500,(p,'missing or empty')
+          with zipfile.ZipFile(must[3]) as z:
+            imgs=[p for p in z.namelist() if p.endswith(('.jpg','.png'))]
+            assert len(imgs)==300 and z.testzip() is None
+          a=json.loads(Path(must[4]).read_text())
+          b=json.loads(Path(must[7]).read_text())
+          assert a['test_images']==60 and abs(a['test_accuracy']-0.95)<1e-6
+          assert abs(b['test_accuracy']-0.863)<1e-6
+          print('All essential files found. Group 141. TM 95%, CIFAR 86.3%.')
+          PY
+      - name: Create single ZIP with navigation and only requested laboratory deliverables
+        run: |
+          zip -q -r 'Lab_Transfer_Learning_Timofeev_RS_141.zip' README.md 01_Report 02_Dataset 03_Teachable_Machine 04_MobileNetV2 05_Source_Code
+          unzip -t 'Lab_Transfer_Learning_Timofeev_RS_141.zip' | tail -1
+          ls -lh 'Lab_Transfer_Learning_Timofeev_RS_141.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Lab_Transfer_Learning_Timofeev_RS_141
+          path: Lab_Transfer_Learning_Timofeev_RS_141.zip
+          retention-days: 30
