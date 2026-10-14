@@ -12,6 +12,13 @@
 - `Отчет_Transfer_Learning.docx` / `.pdf` — пояснительный отчет и бланк.
 - Артефакты `metrics.json`, `confusion_matrix.png`, `main_learning.png`, `mobilenetv2_cifar3.h5` и другие генерируются *при запуске*, не включены без подтвержденного обучения.
 
+## Изображения для Teachable Machine — обновлено 14.10.2026
+
+- **[Скачать новый ZIP с качественными фотографиями](results/dataset_100_per_class.zip)** — 300 изображений, по 100 на класс (`bird`, `cat`, `dog`), `train` 80 и `test` 20 на класс.
+- Фото птиц взяты из [Caltech-UCSD Birds-200-2011](https://huggingface.co/datasets/cassiekang/cub200_dataset), фото кошек и собак — из [Cats-Dogs-Birds](https://huggingface.co/datasets/Sijuade/Cats-Dogs-Birds). Эти снимки **не CIFAR-10**, качество исходников выше, искусственного увеличения нет.
+- Сведения об источниках: [`results/TEACHABLE_HIGHRES_DATASET.md`](results/TEACHABLE_HIGHRES_DATASET.md), внутри ZIP — `manifest.csv` с источниками.
+- **Не смешивать результаты:** метрики Accuracy 86,30% и F1 86,27% относятся к другой модели, обученной на CIFAR-10. Их нельзя выдавать за результаты Teachable Machine на новом датасете.
+
 ## Google Colab
 
 1. Откройте `.ipynb` в Google Colab, выберите «Среда выполнения → Запустить все».
