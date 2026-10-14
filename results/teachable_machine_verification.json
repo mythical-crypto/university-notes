@@ -1,0 +1,44 @@
+{
+  "date_verified_utc": "2026-10-14T13:50:46.153661+00:00",
+  "model_url": "https://teachablemachine.withgoogle.com/models/rPbqmrUgK/",
+  "metadata_url": "https://teachablemachine.withgoogle.com/models/rPbqmrUgK/metadata.json",
+  "model_json_url": "https://teachablemachine.withgoogle.com/models/rPbqmrUgK/model.json",
+  "classes": [
+    "bird",
+    "cat",
+    "dog"
+  ],
+  "metadata": {
+    "tfjsVersion": "1.7.4",
+    "tmVersion": "2.4.18",
+    "packageVersion": "0.8.4-alpha2",
+    "packageName": "@teachablemachine/image",
+    "timeStamp": "2026-10-14T13:48:31.285Z",
+    "userMetadata": {},
+    "modelName": "tm-my-image-model",
+    "labels": [
+      "bird",
+      "cat",
+      "dog"
+    ],
+    "imageSize": 224
+  },
+  "format": "layers-model",
+  "model_json_sha256": "26ee794245d57a4242ad58a75e3de4f77148e96bccfce3f8327e59fcd2de4036",
+  "weights": [
+    {
+      "file": "./model.weights.bin",
+      "bytes": 2154432,
+      "sha256": "ae1862d44fff5a4d637e8f8d041fbcfcdab13d5d07f05a37a6e82d1bb2411f2e"
+    }
+  ],
+  "public_resource_status": "verified",
+  "manual_training_parameters_from_user_screenshot": {
+    "epochs": 25,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "train_per_class": 80
+  },
+  "test_metrics": "NOT MEASURED: 60 holdout images have not been evaluated using this public model",
+  "note": "CIFAR-10 MobileNetV2 accuracy 86.30% belongs to the separate GitHub model, not to this Teachable Machine model."
+}
