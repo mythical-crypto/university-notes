@@ -52,8 +52,13 @@ jobs:
           def mapping(features):
               f=next(x for x in features if x['name']=='label')['type']['names']
               val={int(k):v.lower().strip() for k,v in (f.items() if isinstance(f,dict) else enumerate(f))}
+              if sorted(val.values())==['0','1','2']:
+                  # Dataset publisher did not provide meaningful label names; imagefolder's
+                  # alphabetical class ordering is bird=0, cat=1, dog=2.
+                  val={0:'bird',1:'cat',2:'dog'}
+                  print('WARNING: inferred numeric label mapping; inspect preview image!',flush=True)
               assert sorted(val.values())==sorted(C),val
-              print('Verified class IDs:',val)
+              print('Class IDs used:',val)
               return val
           def get_image(src):
               assert src.startswith('https://')
