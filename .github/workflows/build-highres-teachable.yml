@@ -44,7 +44,8 @@ jobs:
               r=S.get(API+path,params=params,timeout=(20,90));r.raise_for_status();return r.json()
           splits=api('/splits',{'dataset':D})['splits']
           ent=next(x for x in splits if x['split']=='train' and x.get('config')=='default')
-          config,total=ent['config'],int(ent['num_examples'])
+          config,total=ent['config'],int(ent.get('num_rows', ent.get('num_examples', 0)))
+          assert total>300,('Missing dataset row count',ent)
           print('Source',D,'rows',total)
           def mapping(features):
               f=next(x for x in features if x['name']=='label')['type']['names']
